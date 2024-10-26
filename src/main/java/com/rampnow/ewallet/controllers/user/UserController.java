@@ -3,6 +3,7 @@ package com.rampnow.ewallet.controllers.user;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.rampnow.ewallet.payloads.commons.DataResponse;
 import com.rampnow.ewallet.payloads.commons.GetAllData;
+import com.rampnow.ewallet.payloads.user.LoginReq;
 import com.rampnow.ewallet.payloads.user.UserPayload;
 import com.rampnow.ewallet.services.user.UserService;
 
@@ -22,6 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
+@CrossOrigin
 @RequestMapping(value = "/user")
 public class UserController {
 
@@ -32,6 +35,13 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<DataResponse> loginUser(@Valid @RequestBody LoginReq loginReq) {
+        return new ResponseEntity<>(
+                DataResponse.builder().result(userService.loginUser(loginReq)).build(),
+                HttpStatus.OK);
     }
 
     @PostMapping("/create")
@@ -56,11 +66,17 @@ public class UserController {
                 HttpStatus.OK);
     }
 
+    @GetMapping("/get/{userId}")
+    public ResponseEntity<DataResponse> getById(@PathVariable String userId) {
+        return new ResponseEntity<>(DataResponse.builder().result(userService.getById(userId)).build(), HttpStatus.OK);
+    }
+
     @GetMapping("/get/all/{skip}/{limit}")
     public ResponseEntity<DataResponse> getAllUsers(HttpServletRequest request, @PathVariable Integer skip,
-            @PathVariable Integer limit, @RequestParam(required = false) String searchText) {
+            @PathVariable Integer limit, @RequestParam(required = false) String searchText,
+            @RequestParam String currentUser) {
         GetAllData data = new GetAllData();
-        data.setData(userService.getAllUsers(skip, limit, searchText));
+        data.setData(userService.getAllUsers(skip, limit, currentUser, searchText));
         String urlPath = "/user/get/all/" + (skip + 1) + "/" + limit;
         data.setNextUrl(getNextUrl(request, urlPath));
         return new ResponseEntity<>(DataResponse.builder().result(data).build(), HttpStatus.OK);

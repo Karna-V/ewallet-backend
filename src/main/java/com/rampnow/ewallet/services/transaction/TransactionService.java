@@ -1,9 +1,11 @@
 package com.rampnow.ewallet.services.transaction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.bson.Document;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
@@ -41,20 +43,24 @@ public class TransactionService {
         } else {
             throw new IllegalArgumentException("you don't have enough balance to make transaction");
         }
+        userRepo.saveAll(Arrays.asList(sender, recipient)).subscribe();
         Transaction transaction = new Transaction(transactionPayload);
         transactionRepo.save(transaction).subscribe();
         return transaction.getId();
     }
 
-    public List<Object> getAllTransactions(String userId, int skip, int limit, String searchText,
+    public List<Document> getAllTransactions(String userId, int skip, int limit, String searchText,
             Direction sortDirection) {
         List<AggregationOperation> operations = new ArrayList<>();
         operations.add(Aggregation.match(Criteria.where("senderId").is(userId)));
-        operations.add(Aggregation.lookup("users", "recipientId", "id", "recipientData"));
+        operations.add(Aggregation.lookup("users", "recipientId", "_id", "recipientData"));
+        operations.add(Aggregation.unwind("recipientData", true));
         if (searchText != null && !searchText.isEmpty()) {
-            Criteria searchCriteria = new Criteria().orOperator(Criteria.where("name").regex(searchText, "i"),
-                    Criteria.where("username").regex(searchText, "i"), Criteria.where("emailId").regex(searchText, "i"),
-                    Criteria.where("phone.number").regex(searchText, "i"));
+            Criteria searchCriteria = new Criteria().orOperator(
+                    Criteria.where("recipientData.name").regex(searchText, "i"),
+                    Criteria.where("recipientData.username").regex(searchText, "i"),
+                    Criteria.where("recipientData.emailId").regex(searchText, "i"),
+                    Criteria.where("recipientData.phone.number").regex(searchText, "i"));
             operations.add(Aggregation.match(searchCriteria));
         }
         if (sortDirection != null) {
@@ -63,8 +69,13 @@ public class TransactionService {
             operations.add(Aggregation.sort(Direction.DESC, "transactionDate"));
         operations.add(Aggregation.skip(skip));
         operations.add(Aggregation.limit(limit));
+        operations.add(
+                Aggregation
+                        .project("senderId", "recipientId", "transactionDate", "amount", "paymentType", "status")
+                        .and("_id").as("id")
+                        .and("recipientData.name").as("recipientData.name"));
         Aggregation aggregation = Aggregation.newAggregation(operations);
-        return reactiveMongoTemplate.aggregate(aggregation, Transaction.class, Object.class).collectList()
+        return reactiveMongoTemplate.aggregate(aggregation, "transactions", Document.class).collectList()
                 .blockOptional().orElse(Collections.emptyList());
     }
 }

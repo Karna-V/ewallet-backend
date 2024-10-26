@@ -1,0 +1,14 @@
+services:
+  ewallet_backend:
+    container_name: ewallet_backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - ewallet_backend_net
+
+networks:
+  ewallet_backend_net:
+    driver: bridge

@@ -16,8 +16,12 @@ public class UserPayload {
     private String name;
     @NotBlank(message = "username can't be null/blank")
     private String username;
+    @NotBlank(message = "password can't be null/blank")
+    private String password;
     @NotBlank(message = "emailId can't be null/blank")
     private String emailId;
     @NotNull(message = "phone can't be null")
     private Phone phone;
+    @NotNull(message = "amount can't be null")
+    private Double walletBalance;
 }

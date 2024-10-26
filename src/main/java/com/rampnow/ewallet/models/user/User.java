@@ -24,6 +24,7 @@ public class User {
     private String id;
     private String name;
     private String username;
+    private String password;
     private String emailId;
     private Phone phone;
     private Double walletBalance;
@@ -34,9 +35,10 @@ public class User {
         this.id = GenerateId.withPrefix(shortCode);
         this.name = userPayload.getName();
         this.username = userPayload.getUsername();
+        this.password = userPayload.getPassword();
         this.emailId = userPayload.getEmailId();
         this.phone = userPayload.getPhone();
-        this.walletBalance = 0.0;
+        this.walletBalance = userPayload.getWalletBalance();
         this.createdOn = new Date();
         this.updatedOn = new Date();
     }
@@ -55,5 +57,24 @@ public class User {
 
     public void subtractWalletBalance(double amount) {
         this.walletBalance -= amount;
+    }
+
+    public User loginRes() {
+        User res = new User();
+        res.id = this.id;
+        res.name = this.name;
+        res.phone = this.phone;
+        res.emailId = this.emailId;
+        res.walletBalance = this.walletBalance;
+        return res;
+    }
+
+    public User minimalRes() {
+        User res = new User();
+        res.id = this.id;
+        res.name = this.name;
+        res.phone = this.phone;
+        res.emailId = this.emailId;
+        return res;
     }
 }

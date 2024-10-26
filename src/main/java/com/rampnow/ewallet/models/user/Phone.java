@@ -12,5 +12,5 @@ public class Phone {
     @NotBlank(message = "countryCode can't be null/blank")
     private String countryCode;
     @NotBlank(message = "number can't be null/blank")
-    private Integer number;
+    private String number;
 }
